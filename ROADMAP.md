@@ -204,12 +204,12 @@ Real examples to study:
 | Repo | Why read it |
 |---|---|
 | https://github.com/sierra-research/tau2-bench | Simulated users, DB-state grading, pass^k, banking + full-duplex voice (`src/tau2/voice/`) |
-| https://github.com/pipecat-ai/pipecat (`src/pipecat/evals/`, `scripts/evals/`) | Voice scenario tests, barge-in, judges, release evals |
+| https://github.com/pipecat-ai/pipecat (`src/pipecat/evals/`) | Voice scenario tests, barge-in, judges |
 | https://github.com/pipecat-ai/stt-benchmark | STT latency + semantic WER |
 | https://github.com/livekit/agents | pytest-based agent tests, STT/TTS suites |
 | https://github.com/openai/openai-cookbook (`examples/Realtime_eval_guide.ipynb`) | Realtime voice eval harness |
 | https://github.com/vibrantlabsai/ragas | RAG metrics (for knowledge-base answers) |
-| https://github.com/hamelsmu/evals-skills | Evals process material from the FAQ authors |
+| https://github.com/ai-evals-course/evals-skills | Evals process material from the FAQ authors (replaces the deprecated `hamelsmu/evals-skills`) |
 
 ---
 

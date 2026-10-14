@@ -30,7 +30,8 @@ flowchart LR
 
 ## Start here
 
-1. **[`ROADMAP.md`](ROADMAP.md)**: the full roadmap. It has a plain-words glossary, 6 levels, a voice + fintech deep dive, and how small, medium and large teams build evals. It also lists 6 projects, verified blogs, and OSS repos to study.
+1. **[`PRACTICAL_ROADMAP.md`](PRACTICAL_ROADMAP.md)**: start here. 9 stages built around real production work (Nubank, Monzo, Ramp, Stripe, Airbnb, GitHub, Sierra). Each stage shows the team's problem, what they built, the exact OSS files to read, and a small copy you build on one bank agent.
+2. **[`ROADMAP.md`](ROADMAP.md)**: the theory map. It has a plain-words glossary, 6 levels, a voice + fintech deep dive, and how small, medium and large teams build evals.
 
 ## What's inside ROADMAP.md
 
