@@ -2,8 +2,10 @@
 
 This is how large tech companies and AI startups actually build the eval system, mapped onto **our setup**:
 
+- we are an AI company building voice agents **for banks** (the banks are our clients)
 - LiveKit Agents (Python), on our own server (self-hosted)
-- every transcript and recording is saved
+- we sell a **SaaS platform**. It is built and now in the **integration phase** with banks
+- **no real bank customer data yet**: only our own test calls, which are saved as transcripts and recordings
 - two must-never rules: **guardrails never broken** and **answers match the knowledge base (KB)**
 
 Sources were opened and checked on 2026-10-15. **[INFERENCE]** marks my own design suggestions that no source states directly.
@@ -34,7 +36,7 @@ flowchart TB
   O4 -->|ship| L1
 ```
 
-The system has 8 building blocks (A–H). Each one below follows the same shape: what it is, how real teams built it, how we build it on LiveKit, and what to read.
+The system has 9 building blocks (A–I). Each one below follows the same shape: what it is, how real teams built it, how we build it on LiveKit, and what to read.
 
 ---
 
@@ -70,13 +72,14 @@ The system has 8 building blocks (A–H). Each one below follows the same shape:
 - OpenAI's realtime guide: a gold seed set of 10–50, plus regression, rolling-discovery and holdout sets ([guide](https://developers.openai.com/cookbook/examples/realtime_eval_guide)).
 - Nubank: 90 to 888 labeled rows per judge, split 40/30/30 ([paper](https://arxiv.org/html/2606.08867)).
 
-**How we do it:** pull from our saved transcripts:
+**Where our data comes from (no real bank calls yet):** teams start before launch with synthetic and team-written data. Airbnb started with "100 examples (synthetic is fine)". OpenAI's guide starts with a 10–50 case gold seed set. Nubank ran "Automated Simulation and Red-Teaming" before launch.
 
-| Set | What goes in | Size to start |
+| Set | Now (integration phase) | After a bank goes live |
 |---|---|---|
-| Golden | Calls labeled pass/fail by a compliance or ops expert | 50–100, with bad calls included |
-| Regression | Every production failure we find | Grows over time |
-| Holdout | Labeled calls never used to tune prompts or judges | 30% of labels |
+| Golden | 50–100 test calls written and labeled by our team, from each bank's real use cases (block card, balance, dispute, KB questions), **including bad calls** | Add real calls labeled by the bank's ops or compliance experts |
+| Regression | Every failure found in our own test calls | Every production failure |
+| Holdout | 30% of labels, never used to tune prompts or judges | Same |
+| Synthetic | LLM-generated callers and questions (`generate-synthetic-data` skill in [`evals-skills`](https://github.com/ai-evals-course/evals-skills)) | Seed new synthetic callers from real calls, like Monzo |
 
 ---
 
@@ -187,7 +190,7 @@ Example files: `examples/frontdesk/test_agent.py`, `examples/drive_thru/test_age
 
 ---
 
-## H. The report a bank's risk team reads
+## H. The report our bank clients' risk teams read
 
 **How real teams do it:**
 - Ramp reports **paired** metrics (Disagreement Rate *and* Unsure Rate), so a model can't look good by refusing ([post](https://builders.ramp.com/post/financial-benchmarks)).
@@ -195,6 +198,27 @@ Example files: `examples/frontdesk/test_agent.py`, `examples/drive_thru/test_age
 - US bank model-risk guidance: [SR 26-2](https://www.federalreserve.gov/supervisionreg/srletters/SR2602.pdf).
 
 **What goes in our weekly report:** each check's pass rate with sample size; each judge's TPR/TNR; pass^k on key tasks; worst slices (noisy calls, numbers, long calls); every guardrail failure with call id.
+
+---
+
+## I. A go-live gate for each new bank [INFERENCE]
+
+We are a SaaS platform, so every bank we integrate brings its own KB, its own rules, and its own guardrails. This section is my design suggestion; no source describes it.
+
+```mermaid
+flowchart LR
+  A[New bank: KB + rules + guardrails] --> B[Bank-specific golden set + test callers]
+  B --> C[Run full eval suite]
+  C -->|all guardrails pass, KB judge above bar| D[Go live, start at small traffic]
+  C -->|fails| E[Fix config / KB / prompt]
+  E --> C
+  D --> F[Online scoring, block G]
+```
+
+- **Shared suite (every bank):** platform guardrails (no card numbers read back, identity first, handoff on request), latency, interruptions.
+- **Per bank:** that bank's KB judge, its own guardrail list, and its own golden set.
+- **Go-live rule:** zero guardrail failures, and the KB judge passes the bar you set beforehand (as Nubank sets a pass criterion before each simulation round).
+- **Output:** the block H report becomes the evidence pack you hand to each bank's risk team.
 
 ---
 
@@ -208,22 +232,23 @@ Example files: `examples/frontdesk/test_agent.py`, `examples/drive_thru/test_age
 | STT accuracy + latency | `pipecat-ai/stt-benchmark` method | — |
 | Practice benchmark | τ-bench `banking_knowledge` | — |
 
-**[INFERENCE]** For a bank, self-hostable tools usually win because call data can't leave your servers. Check this with your compliance team.
+**[INFERENCE]** Once banks go live, their contracts will decide where their customers' call data may go. Self-hostable tools keep that data on our servers. Check each bank's data agreement before sending traces to any hosted tool.
 
 ---
 
 ## Order to build it
 
-Each phase only needs what came before it, and the first phases need no new infrastructure.
+There's no real bank traffic yet, so the order is **pre-launch first**. Each phase only needs what came before it.
 
-| Phase | Build | Uses blocks | Learning lessons |
-|---|---|---|---|
-| 1 | Read 30+ saved calls, list failure types | A | Lesson 2 |
-| 2 | Code guardrail checks on saved session reports | A, C1 | Stage 2–3 |
-| 3 | Label 100 calls; build + validate the KB judge | B, C2 | Stage 4 |
-| 4 | pytest suite with `mock_tools`, in GitHub Actions | D1, F | Stage 2, 7 |
-| 5 | Langfuse: traces + judges on live calls | A, G | Stage 7 |
-| 6 | Own simulated callers; voice metrics from recordings | D2, E | Stage 5–6 |
-| 7 | Weekly report | H | Stage 8 |
+| Phase | When | Build | Uses blocks | Learning lessons |
+|---|---|---|---|---|
+| 1 | Now | Read 30+ of our test-call transcripts; list failure types | A | Lesson 2 |
+| 2 | Now | Write a golden set: 50–100 test calls per use case, including bad ones | B | Stage 0–1 |
+| 3 | Now | Code guardrail checks on every test call's session report | A, C1 | Stage 2–3 |
+| 4 | Now | Label calls; build and validate the KB judge | B, C2 | Stage 4 |
+| 5 | Now | pytest suite with `mock_tools`, gating every pull request | D1, F | Stage 2, 7 |
+| 6 | Now | Own simulated callers; voice metrics from test recordings | D2, E | Stage 5–6 |
+| 7 | Per bank integration | Go-live gate + evidence report for that bank | I, H | Stage 8 |
+| 8 | After go-live | Langfuse: traces + judges on live calls; failures → regression set | A, G | Stage 7 |
 
 Lessons for each phase are saved in [`lessons/`](lessons/).

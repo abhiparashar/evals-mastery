@@ -35,7 +35,8 @@ If your agent succeeds 75% of the time on one try, it succeeds on all 3 of 3 tri
 
 ## Your answers
 
-- **Stack:** LiveKit Agents, deployed on our own server. All transcripts and recordings are saved.
+- **Company:** an AI company with a SaaS voice-agent platform for banks. The platform is built and in the integration phase; no bank is live yet.
+- **Stack:** LiveKit Agents, deployed on our own server. Transcripts and recordings of our **test calls** are saved. There's no real bank customer data yet.
 - **Must never get wrong:**
   - guardrails must never be broken (industry name: policy / compliance checks)
   - answers must match the knowledge base (industry name: correctness / faithfulness; Nubank's judge asks "does the answer contradict our knowledge base?")

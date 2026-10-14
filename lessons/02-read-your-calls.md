@@ -33,7 +33,7 @@ Airbnb read 100 outputs and found 15 faithfulness errors, 8 too-wordy, 5 wrong r
 ## Your turn
 
 1. Write down your guardrails as a list. Each one should be a yes/no sentence, for example: "Agent never reads back a full card number."
-2. Read **20 transcripts**. In a spreadsheet with columns `call_id` and `what went wrong`, write one plain sentence per problem. Skip calls with no problem.
+2. Read **20 of your test-call transcripts** (no real bank calls exist yet). In a spreadsheet with columns `call_id` and `what went wrong`, write one plain sentence per problem. Skip calls with no problem. If you have fewer than 20, make more test calls covering the main use cases (balance, block card, dispute, a KB question, asking for a human).
 
 ## Read more
 
