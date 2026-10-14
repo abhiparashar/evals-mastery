@@ -26,6 +26,7 @@ Every stage uses the same layout:
 
 | Part | Meaning |
 |---|---|
+| **You will learn** | The skills and ideas this stage teaches |
 | **Real problem** | What went wrong for a real team |
 | **What they built** | From their engineering blog or paper |
 | **Code to open** | Exact files in an open-source repo |
@@ -35,6 +36,12 @@ Every stage uses the same layout:
 ---
 
 ## Stage 0: The thing you will test
+
+**You will learn:**
+- What a **trace** is (the full record of one conversation) and how to save one as JSON
+- How to write a **test task**: a caller goal plus the expected end state of the database
+- Why a fake database and fake tools are what make an agent testable
+- How τ-bench lays out a domain, so your project matches a real benchmark
 
 **Copy this layout from:** τ-bench (Sierra). Every domain (airline, retail, telecom, banking) is a folder with the same files.
 
@@ -54,6 +61,12 @@ Every stage uses the same layout:
 
 ## Stage 1: Read traces before writing any metric
 
+**You will learn:**
+- **Error analysis**: reading conversations by hand to find what actually breaks
+- **Open coding** (one free-text note per problem) and **axial coding** (grouping notes into failure types)
+- How to turn notes into a ranked list of failure types with counts
+- Why you read traces *before* choosing any metric
+
 **Real problem:** teams wrote generic metrics ("helpfulness 1–10") that gave a score but didn't point to anything to fix.
 
 **What they built:**
@@ -69,6 +82,12 @@ Every stage uses the same layout:
 ---
 
 ## Stage 2: Code checks on tool calls
+
+**You will learn:**
+- Writing **code graders** (checks in plain Python) and running them with pytest
+- Scoring tool choice like a classifier: **precision**, **recall** and a **confusion matrix**
+- Checking tool **arguments** separately: missing, made-up, or wrong values
+- Checking the steps along the way, not only the final answer
 
 **Real problem:** the agent calls the wrong tool, or the right tool with wrong arguments. You don't need an LLM to catch this.
 
@@ -89,6 +108,12 @@ Every stage uses the same layout:
 
 ## Stage 3: Grade the end state, run it k times
 
+**You will learn:**
+- **Outcome grading**: checking what changed in the database, not what the agent said
+- Combining checks so that one failed check fails the whole task
+- **pass@k** vs **pass^k**, and why a bank cares about pass^k (it must work *every* time)
+- Why the grader must be hidden from the agent
+
 **Real problem:** the agent *says* "your card is frozen" but never freezes it. Or it works on run 1 and fails on run 3.
 
 **What they built:**
@@ -108,6 +133,13 @@ Every stage uses the same layout:
 ---
 
 ## Stage 4: LLM judges you can trust
+
+**You will learn:**
+- Writing a **pass/fail judge prompt** for one failure type
+- Building a **golden set** (hand-labeled examples, including bad ones) and splitting it into train/dev/test
+- Measuring the judge: **TPR**, **TNR** and **Cohen's κ** (agreement beyond chance)
+- Judge noise: re-running the judge to see how much its scores move
+- How many labels you need, using **confidence intervals**
 
 **Real problem:** some failures need judgment ("did it verify identity *before* sharing the balance?"). An LLM judge can check that, but the judge itself makes mistakes.
 
@@ -131,6 +163,12 @@ Every stage uses the same layout:
 
 ## Stage 5: Simulated callers
 
+**You will learn:**
+- Building a **simulated caller**: an LLM with a persona and a goal
+- A **stateful tool simulator**: fake tools that really update the fake database
+- Writing a hypothesis and a pass criterion *before* running a simulation
+- Why simulation is a screen and a live A/B test is the final judge
+
 **Real problem:** you can't wait for real customers to find bugs, and a fixed script doesn't test a confused or angry caller.
 
 **What they built:**
@@ -150,6 +188,13 @@ Every stage uses the same layout:
 ---
 
 ## Stage 6: The voice layer
+
+**You will learn:**
+- **WER** (word error rate), **semantic WER** (only errors that change meaning), and a **number error rate** for amounts and card digits
+- Measuring latency: **TTFS** (time to final transcript) as p50 / p95
+- Testing **turn-taking**: interruptions (barge-in), long silences, talking over the caller
+- How phone-line audio quality (8 kHz, dropped frames, noise) breaks agents
+- Measuring the **text vs voice gap** on the same tasks
 
 **Real problem:** the same agent that passes in text fails on the phone. "Fifteen" becomes "fifty", it talks over the caller, or it goes silent for 2 seconds.
 
@@ -174,6 +219,12 @@ Every stage uses the same layout:
 ---
 
 ## Stage 7: CI gate and live scoring
+
+**You will learn:**
+- **CI gates**: running evals in GitHub Actions and blocking a bad pull request
+- What to run on every commit (fast text tests) vs nightly (slow audio tests)
+- **Online evals**: scoring a sample of live calls with judges in Langfuse
+- The **failure → new test** loop, and staged rollouts (1% of traffic, then more)
 
 **Real problem:** a prompt tweak or model upgrade silently breaks a flow that worked last week.
 
@@ -201,6 +252,13 @@ Every stage uses the same layout:
 
 ## Stage 8: Fintech rules and a report a risk team accepts
 
+**You will learn:**
+- **Paired metrics**, so a model can't look good by refusing to answer
+- Clear outcome buckets (approve / reject / needs review) instead of confidence scores
+- Hard rules in plain code under the LLM (limits, blocklists)
+- Turning bank rules into checks: identity first, no card numbers read back, disclosures, handoff to a human
+- Writing an **eval report** a model-risk team can use to decide whether to ship
+
 **Real problem:** in a bank, one missing disclosure or one wrong balance is a compliance issue. Averages hide that.
 
 **What they built:**
@@ -220,6 +278,33 @@ Every stage uses the same layout:
 **Done when:** someone who never saw your code can read the report and decide whether to ship.
 
 ---
+
+## Best practices: what top teams do, and how they implement it
+
+Each row is a practice that at least one real team describes, plus the concrete mechanism they use. The last column says where you practise it.
+
+| # | Best practice | Who does it | How it is implemented | Stage |
+|---|---|---|---|---|
+| 1 | Read traces before picking metrics | Hamel & Shreya, Airbnb | Read 30+ traces, one note per problem, group notes into failure types with counts (Airbnb: 15 faithfulness, 8 verbosity, 5 over-refusal, 3 broken JSON out of 100) | 1 |
+| 2 | Code checks first, LLM judges only where judgment is needed | Airbnb, Anthropic, LinkedIn | Layers: programmatic checks → LLM judge → human review. LinkedIn's plain-code parser cut format errors from ~10% to ~0.01% | 2 |
+| 3 | Score tool calls like a classifier | GitHub MCP, Ramp | Rows of {input, expected tools, expected args}; confusion matrix + precision/recall for tool choice; exact-match for args; Ramp also asserts on intermediate steps | 2 |
+| 4 | Grade the outcome, not the wording | Sierra, Stripe | τ-bench reward = DB check × communicate check (`evaluator_env.py`, `evaluator_communicate.py`). Stripe's graders inspect the Stripe API objects actually created | 3 |
+| 5 | Measure reliability across repeats | Sierra, Stripe, Anthropic | Run each task k times; `pass_hat_k()` in `agent_metrics.py`. Stripe runs 3 times. 75% per try → ≈42% pass^3 | 3 |
+| 6 | Hide the grader from the agent | Stripe | Grader code and server live outside what the agent can read; otherwise it "trivially solves the eval" | 3 |
+| 7 | One binary judge per failure type | Nubank, Airbnb, Hamel | Nubank runs 5 pass/fail evaluators (E1–E5). Airbnb: 3–5 judges, strict JSON `{"reason", "score": 1 or 0}`, judge model ≠ agent model | 4 |
+| 8 | Prove the judge agrees with humans before using it | Hamel, Airbnb, Nubank | 50+ pass and 50+ fail labels; train/dev/test split (Nubank 40/30/30); report TPR/TNR or κ. Bars: Airbnb high 80s–90s, Nubank κ > 0.8. Nubank tunes judge prompts with GEPA in DSPy | 4 |
+| 9 | Measure noise before trusting a score change | Airbnb, Eugene Yan | Re-run the judge on the same inputs (Airbnb saw ~1% drift); cache outputs keyed by sample + config; size the label set from confidence intervals (200 samples → ±2.4% at 3% defects) | 4 |
+| 10 | Ground truth comes from experts, not user behaviour | Monzo, Ramp | Monzo: 100 conversations approved by subject-matter experts. Ramp: golden sets reviewed by their own team because finance users are "frequently lenient" | 4, 5 |
+| 11 | Simulate before launch, with tools that keep state | Monzo, Nubank, DoorDash | LLM caller seeded from real conversations; fake tools update a fake backend ("blocking a card updates its status"). Nubank: 250 simulated conversations per version, hypothesis + pass criterion written first | 5 |
+| 12 | Simulation screens; live traffic decides | Nubank | Versions that pass simulation launch at 1% of traffic, then ramp; tNPS and self-service rate are the final metrics | 5, 7 |
+| 13 | Change only one thing: same task, different channel | Sierra, OpenAI | τ-voice reuses the text tasks byte-for-byte, so the voice gap is measurable. OpenAI's Walk harness replays the same scenario with `clean`, `noisy`, `telephony`, `packet_loss` audio | 6 |
+| 14 | Gate every change, and also run on a schedule | GitHub Copilot, LiveKit | Copilot: 4,000+ offline tests mostly in CI, plus daily runs against production models. LiveKit: text simulations per commit, audio nightly (`.github/workflows/evals.yml`) | 7 |
+| 15 | Score live traffic and send the worst to humans | Nubank, Airbnb, Monzo | Nubank: auditor LLM on 100% of conversations. Airbnb: 5% daily sample + weekly PM review. Monzo: review every message at first, then lower the sample rate | 7 |
+| 16 | Every production failure becomes a test | Ramp | "Turn failures into test cases"; Ramp calls evals "the new unit tests" | 7 |
+| 17 | Re-run the full suite before any model upgrade | Nubank, GitHub Copilot | Nubank runs the eval suite before any model change; GPT-5 needed new "tool-first" instructions. Copilot runs its offline tests on candidate models, and a proxy server lets them swap models without client changes | 7 |
+| 18 | Report paired metrics and clear buckets | Ramp | Disagreement Rate *and* Unsure Rate; outputs are Approve / Reject / Needs review, not confidence scores | 8 |
+| 19 | Put hard rules in code, under the LLM | Ramp, Nubank | Ramp: dollar limits, vendor blocklists, category rules in code. Nubank: a "composite tool" replaced a multi-step card flow the LLM kept getting wrong | 8 |
+| 20 | Audit the grader itself | Anthropic, Stripe, GitHub | Anthropic reports a score that went 42% → 95% after fixing grader bugs. Stripe engineers review the best transcript. Copilot audits its LLM judge's outputs | 8 |
 
 ## Cheat sheet: what to copy from whom
 
