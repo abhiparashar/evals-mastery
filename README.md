@@ -30,7 +30,8 @@ flowchart LR
 
 ## Start here
 
-1. **[`IMPLEMENTATION_BLUEPRINT.md`](IMPLEMENTATION_BLUEPRINT.md)**: start here. How large tech and AI startups build the full eval system, mapped onto our LiveKit (self-hosted) bank voice agent: traces, datasets, guardrail checks, KB-compliance judge, tests, simulation, voice checks, CI, live scoring, risk report, tools, and build order.
+0. **[`LEARNING.md`](LEARNING.md)**: progress, teaching rules and next step. Read this first in any new session, on any laptop.
+1. **[`IMPLEMENTATION_BLUEPRINT.md`](IMPLEMENTATION_BLUEPRINT.md)**: how large tech and AI startups build the full eval system, mapped onto our LiveKit (self-hosted) bank voice agent: traces, datasets, guardrail checks, KB-compliance judge, tests, simulation, voice checks, CI, live scoring, risk report, tools, and build order.
 2. **[`PRACTICAL_ROADMAP.md`](PRACTICAL_ROADMAP.md)**: 9 stages built around real production work (Nubank, Monzo, Ramp, Stripe, Airbnb, GitHub, Sierra). Each stage shows what you'll learn, the team's problem, what they built, the exact OSS files to read, and a small copy you build. Includes 20 best practices and how each is implemented.
 3. **[`lessons/`](lessons/)**: saved lessons, one file per lesson.
 4. **[`ROADMAP.md`](ROADMAP.md)**: the theory map. It has a plain-words glossary, 6 levels, a voice + fintech deep dive, and how small, medium and large teams build evals.
